@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-use_tag="tiangolo/uvicorn-gunicorn-fastapi:$NAME"
+use_tag="$DOCKER_REPO:$NAME"
 
 DOCKERFILE="$NAME"
 
@@ -9,4 +9,7 @@ if [ "$NAME" == "latest" ] ; then
     DOCKERFILE="python3.8"
 fi
 
-docker build -t "$use_tag" --file "./docker-images/${DOCKERFILE}.dockerfile" "./docker-images/"
+docker buildx build --platform linux/amd64,linux/arm64 \
+    -t "$use_tag" docker-images/ \
+    -f docker-images/python3.8-slim.dockerfile \
+    --push
