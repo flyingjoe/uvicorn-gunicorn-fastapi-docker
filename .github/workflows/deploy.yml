@@ -35,6 +35,8 @@ jobs:
           python-version: "3.7"
       - name: Install Dependencies
         run: python3.7 -m pip install "docker>=4.4.4,<5.0.0" "pytest>=6.2.4,<7.0.0"
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1  
       - name: Configure Buildx
         run: docker buildx create --use 
       - name: Deploy Image
