@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-use_tag="$DOCKER_REPO:$NAME"
+use_tag="$REPO:$NAME"
 
 DOCKERFILE="$NAME"
 
@@ -11,5 +11,5 @@ fi
 
 docker buildx build --platform linux/amd64,linux/arm64 \
     -t "$use_tag" docker-images/ \
-    -f docker-images/python3.8-slim.dockerfile \
+    -f docker-images/$DOCKERFILE.dockerfile \
     --push
