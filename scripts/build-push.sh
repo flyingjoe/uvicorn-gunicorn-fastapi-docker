@@ -12,7 +12,8 @@ if [ "$NAME" == "latest" ] ; then
     DOCKERFILE="python3.8"
 fi
 
-docker buildx build --platform linux/amd64,linux/arm64 \
+docker buildx build \
+    --platform inux/amd64,linux/arm64,linux/arm32v6,linux/arm32v7,linux/arm64v8 \
     -t "$use_tag" docker-images/ \
     -f docker-images/$DOCKERFILE.dockerfile \
     --push
