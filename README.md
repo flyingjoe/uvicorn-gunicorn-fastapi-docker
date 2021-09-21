@@ -2,16 +2,19 @@
 
 ## Supported tags and respective `Dockerfile` links
 
-* [`python3.8`, `latest` _(Dockerfile)_](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/docker-images/python3.8.dockerfile)
+* [`python3.9`, `latest` _(Dockerfile)_](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/docker-images/python3.9.dockerfile)
+* [`python3.8`, _(Dockerfile)_](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/docker-images/python3.8.dockerfile)
 * [`python3.7`, _(Dockerfile)_](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/docker-images/python3.7.dockerfile)
 * [`python3.6` _(Dockerfile)_](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/docker-images/python3.6.dockerfile)
+* [`python3.9-slim` _(Dockerfile)_](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/docker-images/python3.9-slim.dockerfile)
 * [`python3.8-slim` _(Dockerfile)_](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/docker-images/python3.8-slim.dockerfile)
+* [`python3.9-alpine3.14` _(Dockerfile)_](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/docker-images/python3.9-alpine3.14.dockerfile)
 * [`python3.8-alpine3.10` _(Dockerfile)_](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/docker-images/python3.8-alpine3.10.dockerfile)
 * [`python3.7-alpine3.8` _(Dockerfile)_](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/docker-images/python3.7-alpine3.8.dockerfile)
 * [`python3.6-alpine3.8` _(Dockerfile)_](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/docker-images/python3.6-alpine3.8.dockerfile)
 
 
-**Note**: Note: There are [tags for each build date](https://hub.docker.com/r/tiangolo/uvicorn-gunicorn-fastapi/tags). If you need to "pin" the Docker image version you use, you can select one of those tags. E.g. `tiangolo/uvicorn-gunicorn-fastapi:python3.7-2019-10-15`.
+**Note**: There are [tags for each build date](https://hub.docker.com/r/tiangolo/uvicorn-gunicorn-fastapi/tags). If you need to "pin" the Docker image version you use, you can select one of those tags. E.g. `tiangolo/uvicorn-gunicorn-fastapi:python3.7-2019-10-15`.
 
 # uvicorn-gunicorn-fastapi
 
@@ -50,7 +53,7 @@ FastAPI is a modern, fast (high-performance), web framework for building APIs wi
 The key features are:
 
 * **Fast**: Very high performance, on par with **NodeJS** and **Go** (thanks to Starlette and Pydantic).
-* **Fast to code**: Increase the speed to develop features by about 300% to 500% *.
+* **Fast to code**: Increase the speed to develop features by about 200% to 300% *.
 * **Less bugs**: Reduce about 40% of human (developer) induced errors. *
 * **Intuitive**: Great editor support. <abbr title="also known as auto-complete, autocompletion, IntelliSense">Completion</abbr> everywhere. Less time debugging.
 * **Easy**: Designed to be easy to use and learn. Less time reading docs.
@@ -91,7 +94,7 @@ If you are creating a new [**Starlette**](https://www.starlette.io/) web applica
 * You don't need to clone the GitHub repo. You can use this image as a base image for other images, using this in your `Dockerfile`:
 
 ```Dockerfile
-FROM tiangolo/uvicorn-gunicorn-fastapi:python3.7
+FROM tiangolo/uvicorn-gunicorn-fastapi:python3.9
 
 COPY ./app /app
 ```
@@ -116,7 +119,7 @@ docker build -t myimage ./
 * Create a `Dockerfile` with:
 
 ```Dockerfile
-FROM tiangolo/uvicorn-gunicorn-fastapi:python3.7
+FROM tiangolo/uvicorn-gunicorn-fastapi:python3.9
 
 COPY ./app /app
 ```
@@ -209,7 +212,7 @@ Let's say you have a project managed with [Poetry](https://python-poetry.org/), 
 Then you could have a `Dockerfile` like:
 
 ```Dockerfile
-FROM tiangolo/uvicorn-gunicorn-fastapi:python3.7
+FROM tiangolo/uvicorn-gunicorn-fastapi:python3.9
 
 # Install Poetry
 RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | POETRY_HOME=/opt/poetry python && \
@@ -667,6 +670,10 @@ All the image tags, configurations, environment variables and application option
 
 ### Latest Changes
 
+* ✏ Fix typo, repeated word on README. PR [#96](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/pull/96) by [@shelbylsmith](https://github.com/shelbylsmith).
+* 📌 Add external dependencies and Dependabot to get automatic upgrade PRs. PR [#109](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/pull/109) by [@tiangolo](https://github.com/tiangolo).
+* ✨ Add Python 3.9 and Python 3.9 Alpine. PR [#67](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/pull/67) by [@graue70](https://github.com/graue70).
+* 👷 Update Latest Changes. PR [#108](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/pull/108) by [@tiangolo](https://github.com/tiangolo).
 * 👷 Allow GitHub workflow dispatch to trigger test and deploy. PR [#93](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/pull/93) by [@tiangolo](https://github.com/tiangolo).
 * 👷 Add latest-changes GitHub action, update issue-manager, add funding. PR [#70](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/pull/70) by [@tiangolo](https://github.com/tiangolo).
 ### 0.6.0
