@@ -8,11 +8,17 @@
 * [`python3.6` _(Dockerfile)_](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/docker-images/python3.6.dockerfile)
 * [`python3.9-slim` _(Dockerfile)_](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/docker-images/python3.9-slim.dockerfile)
 * [`python3.8-slim` _(Dockerfile)_](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/docker-images/python3.8-slim.dockerfile)
+
+## Discouraged tags
+
 * [`python3.9-alpine3.14` _(Dockerfile)_](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/docker-images/python3.9-alpine3.14.dockerfile)
 * [`python3.8-alpine3.10` _(Dockerfile)_](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/docker-images/python3.8-alpine3.10.dockerfile)
 * [`python3.7-alpine3.8` _(Dockerfile)_](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/docker-images/python3.7-alpine3.8.dockerfile)
 * [`python3.6-alpine3.8` _(Dockerfile)_](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/blob/master/docker-images/python3.6-alpine3.8.dockerfile)
 
+To learn more about why Alpine images are discouraged for Python read the note at the end: [🚨 Alpine Python Warning](#-alpine-python-warning).
+
+---
 
 **Note**: There are [tags for each build date](https://hub.docker.com/r/tiangolo/uvicorn-gunicorn-fastapi/tags). If you need to "pin" the Docker image version you use, you can select one of those tags. E.g. `tiangolo/uvicorn-gunicorn-fastapi:python3.7-2019-10-15`.
 
@@ -30,7 +36,61 @@
 
 The achievable performance is on par with (and in many cases superior to) **Go** and **Node.js** frameworks.
 
-This image has an "auto-tuning" mechanism included, so that you can just add your code and get that same **high performance** automatically. And without making sacrifices.
+This image has an **auto-tuning** mechanism included to start a number of worker processes based on the available CPU cores. That way you can just add your code and get **high performance** automatically, which is useful in **simple deployments**.
+
+## 🚨 WARNING: You Probably Don't Need this Docker Image
+
+You are probably using **Kubernetes** or similar tools. In that case, you probably **don't need this image** (or any other **similar base image**). You are probably better off **building a Docker image from scratch** as explained in the docs for [FastAPI in Containers - Docker: Build a Docker Image for FastAPI](https://fastapi.tiangolo.com/deployment/docker/#replication-number-of-processes).
+
+---
+
+If you have a cluster of machines with **Kubernetes**, Docker Swarm Mode, Nomad, or other similar complex system to manage distributed containers on multiple machines, then you will probably want to **handle replication** at the **cluster level** instead of using a **process manager** (like Gunicorn with Uvicorn workers) in each container, which is what this Docker image does.
+
+In those cases (e.g. using Kubernetes) you would probably want to build a **Docker image from scratch**, installing your dependencies, and running **a single Uvicorn process** instead of this image.
+
+For example, your `Dockerfile` could look like:
+
+```Dockerfile
+FROM python:3.9
+
+WORKDIR /code
+
+COPY ./requirements.txt /code/requirements.txt
+
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+
+COPY ./app /code/app
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
+```
+
+You can read more about this in the [FastAPI documentation about: FastAPI in Containers - Docker](https://fastapi.tiangolo.com/deployment/docker/#replication-number-of-processes).
+
+## When to Use this Docker Image
+
+### A Simple App
+
+You could want a process manager like Gunicorn running Uvicorn workers in the container if your application is **simple enough** that you don't need (at least not yet) to fine-tune the number of processes too much, and you can just use an automated default, and you are running it on a **single server**, not a cluster.
+
+### Docker Compose
+
+You could be deploying to a **single server** (not a cluster) with **Docker Compose**, so you wouldn't have an easy way to manage replication of containers (with Docker Compose) while preserving the shared network and **load balancing**.
+
+Then you could want to have **a single container** with a Gunicorn **process manager** starting **several Uvicorn worker processes** inside, as this Docker image does.
+
+### Prometheus and Other Reasons
+
+You could also have **other reasons** that would make it easier to have a **single container** with **multiple processes** instead of having **multiple containers** with **a single process** in each of them.
+
+For example (depending on your setup) you could have some tool like a Prometheus exporter in the same container that should have access to **each of the requests** that come.
+
+In this case, if you had **multiple containers**, by default, when Prometheus came to **read the metrics**, it would get the ones for **a single container each time** (for the container that handled that particular request), instead of getting the **accumulated metrics** for all the replicated containers.
+
+Then, in that case, it could be simpler to have **one container** with **multiple processes**, and a local tool (e.g. a Prometheus exporter) on the same container collecting Prometheus metrics for all the internal processes and exposing those metrics on that single container.
+
+---
+
+Read more about it all in the [FastAPI documentation about: FastAPI in Containers - Docker](https://fastapi.tiangolo.com/deployment/docker/).
 
 ## Technical Details
 
@@ -42,9 +102,9 @@ It runs asynchronous Python web code in a single process.
 
 ### Gunicorn
 
-You can use **Gunicorn** to manage Uvicorn and run multiple of these concurrent processes.
+You can use **Gunicorn** to start and manage multiple Uvicorn worker processes.
 
-That way, you get the best of concurrency and parallelism.
+That way, you get the best of concurrency and parallelism in simple deployments.
 
 ### FastAPI
 
@@ -91,10 +151,18 @@ If you are creating a new [**Starlette**](https://www.starlette.io/) web applica
 
 ## How to use
 
-* You don't need to clone the GitHub repo. You can use this image as a base image for other images, using this in your `Dockerfile`:
+You don't need to clone the GitHub repo.
+
+You can use this image as a base image for other images.
+
+Assuming you have a file `requirements.txt`, you could have a `Dockerfile` like this:
 
 ```Dockerfile
 FROM tiangolo/uvicorn-gunicorn-fastapi:python3.9
+
+COPY ./requirements.txt /app/requirements.txt
+
+RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
 COPY ./app /app
 ```
@@ -120,6 +188,10 @@ docker build -t myimage ./
 
 ```Dockerfile
 FROM tiangolo/uvicorn-gunicorn-fastapi:python3.9
+
+COPY ./requirements.txt /app/requirements.txt
+
+RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
 COPY ./app /app
 ```
@@ -209,21 +281,24 @@ Here's a small example of one of the ways you could install your dependencies ma
 
 Let's say you have a project managed with [Poetry](https://python-poetry.org/), so, you have your package dependencies in a file `pyproject.toml`. And possibly a file `poetry.lock`.
 
-Then you could have a `Dockerfile` like:
+Then you could have a `Dockerfile` using Docker multi-stage building with:
 
 ```Dockerfile
+FROM python:3.9 as requirements-stage
+
+WORKDIR /tmp
+
+RUN pip install poetry
+
+COPY ./pyproject.toml ./poetry.lock* /tmp/
+
+RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
+
 FROM tiangolo/uvicorn-gunicorn-fastapi:python3.9
 
-# Install Poetry
-RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | POETRY_HOME=/opt/poetry python && \
-    cd /usr/local/bin && \
-    ln -s /opt/poetry/bin/poetry && \
-    poetry config virtualenvs.create false
+COPY --from=requirements-stage /tmp/requirements.txt /app/requirements.txt
 
-# Copy using poetry.lock* in case it doesn't exist yet
-COPY ./app/pyproject.toml ./app/poetry.lock* /app/
-
-RUN poetry install --no-root --no-dev
+RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
 COPY ./app /app
 ```
@@ -232,7 +307,7 @@ That will:
 
 * Install poetry and configure it for running inside of the Docker container.
 * Copy your application requirements.
-    * Because it uses `./app/poetry.lock*` (ending with a `*`), it won't crash if that file is not available yet.
+    * Because it uses `./poetry.lock*` (ending with a `*`), it won't crash if that file is not available yet.
 * Install the dependencies.
 * Then copy your app code.
 
@@ -662,6 +737,24 @@ But these environment variables will work the same as described above:
 * `PORT`
 * `LOG_LEVEL`
 
+## 🚨 Alpine Python Warning
+
+In short: You probably shouldn't use Alpine for Python projects, instead use the `slim` Docker image versions.
+
+---
+
+Do you want more details? Continue reading 👇
+
+Alpine is more useful for other languages where you build a static binary in one Docker image stage (using multi-stage Docker building) and then copy it to a simple Alpine image, and then just execute that binary. For example, using Go.
+
+But for Python, as Alpine doesn't use the standard tooling used for building Python extensions, when installing packages, in many cases Python (`pip`) won't find a precompiled installable package (a "wheel") for Alpine. And after debugging lots of strange errors you will realize that you have to install a lot of extra tooling and build a lot of dependencies just to use some of these common Python packages. 😩
+
+This means that, although the original Alpine image might have been small, you end up with a an image with a size comparable to the size you would have gotten if you had just used a standard Python image (based on Debian), or in some cases even larger. 🤯
+
+And in all those cases, it will take much longer to build, consuming much more resources, building dependencies for longer, and also increasing its carbon footprint, as you are using more CPU time and energy for each build. 🌳
+
+If you want slim Python images, you should instead try and use the `slim` versions that are still based on Debian, but are smaller. 🤓
+
 ## Tests
 
 All the image tags, configurations, environment variables and application options are tested.
@@ -670,6 +763,8 @@ All the image tags, configurations, environment variables and application option
 
 ### Latest Changes
 
+* 📝 Add note to discourage Alpine with Python. PR [#122](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/pull/122) by [@tiangolo](https://github.com/tiangolo).
+* 📝 Add warning for Kubernetes, when to use this image. PR [#121](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/pull/121) by [@tiangolo](https://github.com/tiangolo).
 * ✏ Fix typo, repeated word on README. PR [#96](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/pull/96) by [@shelbylsmith](https://github.com/shelbylsmith).
 * 📌 Add external dependencies and Dependabot to get automatic upgrade PRs. PR [#109](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/pull/109) by [@tiangolo](https://github.com/tiangolo).
 * ✨ Add Python 3.9 and Python 3.9 Alpine. PR [#67](https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker/pull/67) by [@graue70](https://github.com/graue70).
